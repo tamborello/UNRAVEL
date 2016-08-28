@@ -26,14 +26,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 
 ;;; Filename     : UNRAVEL.lisp
-;;; Revision     : 56
+;;; Revision     : 57
 ;;; 
-;;; Description : A process model of systematic procedural error in a continuous 
-;;; task, Altmann & Trafton's UNRAVEL task. Based on Tamborello & Trafton's
-;;; (2013a & b) model of postcompletion, anticipation, and perseveration error
-;;; in a routine procedural non-continuous task. Developed with ACT-R6 (r1227),
-;;; boost-chunks module 10 (may be made available upon request), spacing-effect
-;;; module (ACT-R extras), &amp; new-threads 2.0a (ACT-R extras).
+;;; Description : This is a process model of systematic procedural error in a  
+;;; continuous task, Altmann & Trafton's UNRAVEL task. Based on Tamborello & 
+;;; Trafton's (2013a & b) model of postcompletion, anticipation, and perseveration 
+;;; error in a routine procedural non-continuous task. Developed with ACT-R6 
+;;; (r1227), boost-chunks module 10 (may be made available upon request), 
+;;; spacing-effect module (ACT-R extras), &amp; new-threads 2.0a (ACT-R extras).
+;;;
+;;; Load by placing the model and support files in ACT-R's user-loads folder. 
+;;; Leave the numbers prepended to the file names as loading order is important. 
+;;; Your Lisp compiler may print some warnings the first time you load these files, 
+;;; but the model should execute regardless.
 ;;; 
 ;;; Bugs: none known
 ;;;
@@ -104,33 +109,32 @@
 ;;; 2015.05.22 fpt 56
 ;;; Replaced a circular list I used for the exp-wind's steps slot since it seemed
 ;;; problematic for sending over tcp socket streams. 
+;;;
+;;; 2016.08.18 fpt 57
+;;; Clean up some things, such as loading of ACT-R & support files.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Load ACT-R
+;; Load ACT-R & support files
+;; Be sure to point to your own copies of an ACT-R installation and this model's
+;; support files.
 (unless
     (member ':act-r-6.0 *features*)
-  (load "/Users/frank/Documents/NRL/Error/actr6/load-act-r-6.lisp"))
+  (load "/Users/frank/Documents/NRL/Error/actr6/load-act-r-6.lisp")
+  (load "/Users/frank/Documents/NRL/Error/actr6/extras/threads/new-threads.lisp")
+  (load "/Users/frank/Documents/NRL/Error/actr6/extras/spacing-effect/spacing-effect.lisp")
+  (load "/Users/frank/Documents/NRL/Error/UNRAVEL/UNRAVEL/virtual-experiment-window.lisp")
+  (load "/Users/frank/Documents/NRL/Error/UNRAVEL/UNRAVEL/seq-math.lisp")
+  (load "/Users/frank/Documents/NRL/Error/UNRAVEL/UNRAVEL/boost.lisp"))
 
-;; Load the threaded cognition module
-(unless
-;; Is there something specific to new-threads I can use to differeniate it from 
-;; ACT-R's standard goal module? For assume the thread module is loaded if spacing-
-;; effect is also loaded.
-    (get-module spacing-effect)
-  (load "/Users/frank/Documents/NRL/Error/actr6/extras/threads/new-threads.lisp"))
+(defparameter *data-directory* 
+  "/Users/frank/Documents/temp/" 
+  "The path into which you wish to save model data.")
 
-;; Load the spacing effect module
-(unless
-    (get-module spacing-effect)
-  (load "/Users/frank/Documents/NRL/Error/actr6/extras/spacing-effect/spacing-effect.lisp"))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; The Task Environment: The Unravel Task
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(require :virtual-experiment-window)
-(require :seq-math)
-
 
 (defvar *resp-session-data* nil)
 (defvar *latency-data* nil)
@@ -248,7 +252,7 @@
     finally (return blk-lst)))
 
 (defmethod initialize-instance :after ((wind exp-window) &key)
-  (setf (base-path wind) "/Users/frank/Documents/NRL/Error/UNRAVEL/UNRAVEL-model-data/"
+  (setf (base-path wind) *data-directory*
         (write-type wind) :SS)
   (setf 
    (block-lst wind) (do-stimgen wind))
